@@ -201,14 +201,6 @@
     
 
 
-  
-(defun gesture-draw-point (gesture x y)
-    ;; Draw a point
-    (DRAW-POINT (gesture-window gesture)
-		    (gesture-gcontext gesture)
-                    x y))
-
-
 
 (defun pop-up (host strings &key (title "Pick one:") (font "fixed"))
   (let* ((display   (OPEN-DISPLAY host))
@@ -295,4 +287,87 @@
 			 t)))
 	
 	(CLOSE-DISPLAY display)))))
+
+(defun display-centered-text
+	     (window string gcontext height width)	     
+	     (multiple-value-bind (w a d l r fa fd) (text-extents gcontext string)
+	       (declare (ignore a d l r))
+	       (let ((box-height (+ fa fd)))
+		 
+		 ;; Clear previous text
+		 (CLEAR-AREA window
+			     :x 0 :y (- height fa)
+			     :width width :height box-height)
+		 
+		 ;; Draw new text
+		 (DRAW-IMAGE-GLYPHS window gcontext (round (- width w) 2) height string))))
+(defun pop-up2 (host strings &key (title "Pick one:") (font "fixed"))
+  (let* ((display   (OPEN-DISPLAY host))
+	 (screen    (first (DISPLAY-ROOTS display)))
+	 (fg-color  (SCREEN-BLACK-PIXEL screen))
+	 (bg-color  (SCREEN-WHITE-PIXEL screen))
+	 (font      (OPEN-FONT display font))
+	 (parent-width 400)
+	 (parent-height 400)
+	 (parent    (CREATE-WINDOW :parent (SCREEN-ROOT screen)
+				   :override-redirect :on
+				   :x 1800 :y 100
+				   :width parent-width :height parent-height
+				   :background bg-color
+				   :event-mask (MAKE-EVENT-MASK :button-press
+                                                                :button-motion
+								:exposure)))
+	 (prompt    "Press a button...")	 
+	 (prompt-gc (CREATE-GCONTEXT :drawable parent
+				     :foreground fg-color
+				     :background bg-color
+				     :font font))
+	 (prompt-y  (FONT-ASCENT font))
+	 (ack-y     (- parent-height  (FONT-DESCENT font))))
+    ;; Present main window
+    (MAP-WINDOW parent)
+    (draw-ev display parent prompt prompt-gc prompt-y parent-width ack-y)))
+
+(defun draw-ev (display parent prompt prompt-gc prompt-y parent-width ack-y)
+    (unwind-protect
+         (loop
+	    (EVENT-CASE (display :force-output-p t)
+	      
+	      (:exposure (count)
+			 ;; Display prompt
+			 (when (zerop count)
+			   (display-centered-text
+                            parent
+                            prompt
+                            prompt-gc
+                            prompt-y
+                            parent-width))
+			 t)
+              (:motion-notify  (window x y code)
+                               (draw-point window prompt-gc x y)
+                               nil
+                               )
+	      
+	      (:button-press (x y)
+			     
+			     ;; Pop up the menu
+                             (display-centered-text
+                              parent
+                              (format nil "You have selected ~a." "foo")
+                              prompt-gc
+                              ack-y
+                              parent-width)
+			     t)
+	      (otherwise ()
+			 ;;Ignore and discard any other event
+			 t)))
+      (CLOSE-DISPLAY display)))
+
+  
+(defun gesture-draw-point (gesture x y)
+    ;; Draw a point
+    (DRAW-POINT (gesture-window gesture)
+		    (gesture-gcontext gesture)
+                    x y))
+
 
