@@ -41,7 +41,8 @@
 		:override-redirect :on		;override window mgr when positioning
 		:event-mask   (MAKE-EVENT-MASK :button-press
                                                :button-motion
-                                               :leave-window					       
+                                               :button-release
+                                               :leave-window
 					       :exposure))
     :width 400
 ))
@@ -103,8 +104,18 @@
      
 (defun draw-ev (display prompt-gc draw-title draw-ack)
   (unwind-protect
-       (let ((initial-x 0)
-             (initial-y 0))
+       (let ((initial-x nil)
+             (initial-y nil)
+             (last-x nil)
+             (last-y nil))
+         (flet (
+                (nil-cords ()
+                    (setf last-x nil) (setf last-y nil) 
+                    (setf initial-x nil) (setf initial-y nil))
+                (dr-l  (window x0 y0 x1 y1)
+                  (draw-line  window prompt-gc x0 y0 x1 y1))
+                (dr-p  (window x0 y0)
+                  (draw-point  window prompt-gc x0 y0)))
          (loop
             (EVENT-CASE (display :force-output-p t)
               
@@ -114,18 +125,24 @@
                            (funcall draw-title ))
 			 t)
               (:motion-notify  (window x y code)
-                               ;(draw-point window prompt-gc x y)
-                               (draw-line  window prompt-gc initial-x initial-y x y)
+                               ;(dr-p win  x y)
+                               ;(dr-l win initial-x initial-y x y)
+                               (dr-l  window last-x last-y x y)
+                               (setf last-x x) (setf last-y y)
                                (funcall draw-ack (symbol-name (figure-out-direction initial-x initial-y x y)))
                                nil
                                )
+;              (:button-release (x y)
+;                               (nil-cords) nil)
 	      (:button-press (x y)
 			     ;; Pop up the menu
+                             (nil-cords)
                              (setf initial-x x) (setf initial-y y) 
+                             (setf last-x x) (setf last-y y) 
                              (funcall draw-ack
                                       (format nil "You have selected ~a." "foo"))
-			     t)
+			     nil)
 	      (otherwise ()
 			 ;;Ignore and discard any other event
 			 t)))
-         (CLOSE-DISPLAY display))))
+         (CLOSE-DISPLAY display)))))
