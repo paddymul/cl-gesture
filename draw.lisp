@@ -326,9 +326,15 @@
 	 (ack-y     (- parent-height  (FONT-DESCENT font))))
     ;; Present main window
     (MAP-WINDOW parent)
-    (draw-ev display parent prompt prompt-gc prompt-y parent-width ack-y)))
+    (labels  (
+              (draw-text (text y)
+                (display-centered-text parent text prompt-gc y parent-width))
+              (draw-title-height (title-text) (draw-text title-text prompt-y))
+              (draw-ack (ack-text) (draw-text ack-text ack-y))
+              (draw-title () (draw-title-height prompt)))
+      (draw-ev display  prompt-gc #'draw-title #'draw-ack))))
 
-(defun draw-ev (display parent prompt prompt-gc prompt-y parent-width ack-y)
+(defun draw-ev (display prompt-gc draw-title draw-ack)
     (unwind-protect
          (loop
 	    (EVENT-CASE (display :force-output-p t)
@@ -336,38 +342,18 @@
 	      (:exposure (count)
 			 ;; Display prompt
 			 (when (zerop count)
-			   (display-centered-text
-                            parent
-                            prompt
-                            prompt-gc
-                            prompt-y
-                            parent-width))
+                           (funcall draw-title ))
 			 t)
               (:motion-notify  (window x y code)
                                (draw-point window prompt-gc x y)
                                nil
                                )
-	      
 	      (:button-press (x y)
-			     
 			     ;; Pop up the menu
-                             (display-centered-text
-                              parent
-                              (format nil "You have selected ~a." "foo")
-                              prompt-gc
-                              ack-y
-                              parent-width)
+                             (funcall draw-ack
+                              (format nil "You have selected ~a." "foo"))
 			     t)
 	      (otherwise ()
 			 ;;Ignore and discard any other event
 			 t)))
       (CLOSE-DISPLAY display)))
-
-  
-(defun gesture-draw-point (gesture x y)
-    ;; Draw a point
-    (DRAW-POINT (gesture-window gesture)
-		    (gesture-gcontext gesture)
-                    x y))
-
-
