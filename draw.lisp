@@ -335,25 +335,29 @@
       (draw-ev display  prompt-gc #'draw-title #'draw-ack))))
 
 (defun draw-ev (display prompt-gc draw-title draw-ack)
-    (unwind-protect
+  (unwind-protect
+       (let ((initial-x 0)
+             (initial-y 0))
          (loop
-	    (EVENT-CASE (display :force-output-p t)
-	      
+            (EVENT-CASE (display :force-output-p t)
+              
 	      (:exposure (count)
 			 ;; Display prompt
 			 (when (zerop count)
                            (funcall draw-title ))
 			 t)
               (:motion-notify  (window x y code)
-                               (draw-point window prompt-gc x y)
+                               ;(draw-point window prompt-gc x y)
+                               (draw-line  window prompt-gc initial-x initial-y x y)
                                nil
                                )
 	      (:button-press (x y)
 			     ;; Pop up the menu
+                             (setf initial-x x) (setf initial-y y) 
                              (funcall draw-ack
-                              (format nil "You have selected ~a." "foo"))
+                                      (format nil "You have selected ~a." "foo"))
 			     t)
 	      (otherwise ()
 			 ;;Ignore and discard any other event
 			 t)))
-      (CLOSE-DISPLAY display)))
+         (CLOSE-DISPLAY display))))
