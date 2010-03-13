@@ -171,33 +171,11 @@
 		   t)))
     
     ;; Erase the ol-st
-    (UNMAP-WINDOW mw)
+    (UNMAP-WINDOW mw)))
     
     ;; Return selected item string, if any
     (unless (eq selected-item :none) selected-item)))
 
-
-(defun ol-st-highlight-item (ol-st position)
-  (let* ((box-margin  (round *ol-st-item-margin* 2))
-	 (left        (- (round (- (ol-st-width ol-st) (ol-st-item-width ol-st)) 2)
-			 box-margin))
-	 (top         (- (* (+ *ol-st-item-margin* (ol-st-item-height ol-st))
-			    (1+ position))
-			 box-margin))
-	 (width       (+ (ol-st-item-width ol-st) box-margin box-margin))
-	 (height      (+ (ol-st-item-height ol-st) box-margin box-margin)))
-    
-    ;; Draw a box in ol-st window around the given item.
-    (DRAW-RECTANGLE (ol-st-window ol-st)
-		    (ol-st-gcontext ol-st)
-		    left top
-		    width height)))
-
-(defun ol-st-unhighlight-item (ol-st position)
-  ;; Draw a box in the ol-st background color
-  (let ((gcontext (ol-st-gcontext ol-st)))
-    (WITH-GCONTEXT (gcontext :foreground (gcontext-background gcontext))
-      (ol-st-highlight-item ol-st position))))
 
 
 (defun ol-st-present (ol-st x y)
@@ -245,4 +223,4 @@
     (unwind-protect
          (ol-st-choose a-ol-st x y))
 
-      (CLOSE-DISPLAY display))))
+      (CLOSE-DISPLAY display)))
