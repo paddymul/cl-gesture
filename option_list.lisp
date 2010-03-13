@@ -27,25 +27,25 @@
 
 (defun create-ol-st (parent-window text-color background-color text-font)
   (make-ol-st
-    ;; Create ol-st graphics context
-    :gcontext (CREATE-GCONTEXT :drawable   parent-window
-			       :foreground text-color
-			       :background background-color
-			       :font       text-font)
-    ;; Create ol-st window
-    :window   (CREATE-WINDOW
-		:parent       parent-window
-		:class        :input-output
-		:x            0			;temporary value
-		:y            0			;temporary value
-		:width        16		;temporary value
-		:height       16		;temporary value		
-		:border-width 2
-		:border       text-color
-		:background   background-color
-		:save-under   :on
-		:override-redirect :on		;override window mgr when positioning
-		:event-mask   (MAKE-EVENT-MASK :exposure))))
+   ;; Create ol-st graphics context
+   :gcontext (CREATE-GCONTEXT :drawable   parent-window
+                              :foreground text-color
+                              :background background-color
+                              :font       text-font)
+   ;; Create ol-st window
+   :window   (CREATE-WINDOW
+              :parent       parent-window
+              :class        :input-output
+              :x            0			;temporary value
+              :y            0			;temporary value
+              :width        16		;temporary value
+              :height       16		;temporary value		
+              :border-width 2
+              :border       text-color
+              :background   background-color
+              :save-under   :on
+              :override-redirect :on		;override window mgr when positioning
+              :event-mask   (MAKE-EVENT-MASK :exposure))))
 
 
 (defun ol-st-set-item-list (ol-st &rest item-strings)
@@ -61,12 +61,12 @@
 	(let (alist)
 	  (dolist (item item-strings (nreverse alist))
 	    (push (list (CREATE-WINDOW
-			  :parent     (ol-st-window ol-st)
-			  :x          0         ;temporary value
-			  :y          0         ;temporary value
-			  :width      16        ;temporary value
-			  :height     16        ;temporary value
-			  :background (GCONTEXT-BACKGROUND (ol-st-gcontext ol-st)))
+                         :parent     (ol-st-window ol-st)
+                         :x          0         ;temporary value
+                         :y          0         ;temporary value
+                         :width      16        ;temporary value
+                         :height     16        ;temporary value
+                         :background (GCONTEXT-BACKGROUND (ol-st-gcontext ol-st)))
 			item)
 		  alist)))))
 
@@ -90,7 +90,7 @@
       
       ;; Compute final ol-st width, taking margins into account
       (setf ol-st-width (max title-width
-			    (+ item-width *ol-st-item-margin* *ol-st-item-margin*)))      
+                             (+ item-width *ol-st-item-margin* *ol-st-item-margin*)))      
       (let ((window  (ol-st-window ol-st))
 	    (delta-y (+ item-height *ol-st-item-margin*)))
 	
@@ -125,57 +125,28 @@
 
 
 (defun ol-st-refresh (ol-st)
- (let* ((gcontext   (ol-st-gcontext ol-st))
-        (baseline-y (FONT-ASCENT (GCONTEXT-FONT gcontext))))
-   
-   ;; Show title centered in "reverse-video"
-   (let ((fg (GCONTEXT-BACKGROUND gcontext))
-	 (bg (GCONTEXT-FOREGROUND gcontext)))
-     (WITH-GCONTEXT (gcontext :foreground fg :background bg)
-       (DRAW-IMAGE-GLYPHS
+  (let* ((gcontext   (ol-st-gcontext ol-st))
+         (baseline-y (FONT-ASCENT (GCONTEXT-FONT gcontext))))
+    
+    ;; Show title centered in "reverse-video"
+    (let ((fg (GCONTEXT-BACKGROUND gcontext))
+          (bg (GCONTEXT-FOREGROUND gcontext)))
+      (WITH-GCONTEXT (gcontext :foreground fg :background bg)
+        (DRAW-IMAGE-GLYPHS
 	 (ol-st-window ol-st)
 	 gcontext
 	 (round (- (ol-st-width ol-st)
 		   (ol-st-title-width ol-st)) 2)	;start x
 	 baseline-y				;start y
 	 (ol-st-title ol-st))))
-   
-   ;; Show each ol-st item (position is relative to item window)
-   (dolist (item (ol-st-item-alist ol-st))
-     (DRAW-IMAGE-GLYPHS
+    
+    ;; Show each ol-st item (position is relative to item window)
+    (dolist (item (ol-st-item-alist ol-st))
+      (DRAW-IMAGE-GLYPHS
        (first item) gcontext
        0					;start x
        baseline-y				;start y
        (second item)))))
-
-
-(defun ol-st-choose (ol-st x y)
-  ;; Display the ol-st so that first item is at x,y.
-  (ol-st-present ol-st x y)
-  
-  (let ((items (ol-st-item-alist ol-st))
-	(mw    (ol-st-window ol-st))
-	selected-item)
-
-    ;; Event processing loop
-    (do () (selected-item)				
-      (EVENT-CASE ((DRAWABLE-DISPLAY mw) :force-output-p t)
-	(:exposure     (count)
-		       
-	 ;; Discard all but final :exposure then display the ol-st
-	 (when (zerop count) (ol-st-refresh ol-st))
-	 t)
-
-	(otherwise ()
-		   ;;Ignore and discard any other event
-		   t)))
-    
-    ;; Erase the ol-st
-    (UNMAP-WINDOW mw)))
-    
-    ;; Return selected item string, if any
-    (unless (eq selected-item :none) selected-item)))
-
 
 
 (defun ol-st-present (ol-st x y)
@@ -191,19 +162,37 @@
 	(let* ((parent-width  (DRAWABLE-WIDTH parent))
 	       (parent-height (DRAWABLE-HEIGHT parent))
 	       (ol-st-height   (+ *ol-st-item-margin*
-				 (* (1+ (length (ol-st-item-alist ol-st)))
-				    (+ (ol-st-item-height ol-st)  *ol-st-item-margin*))))
+                                  (* (1+ (length (ol-st-item-alist ol-st)))
+                                     (+ (ol-st-item-height ol-st)  *ol-st-item-margin*))))
 	       (ol-st-x        (max 0 (min (- parent-width (ol-st-width ol-st))
-					  (- x (round (ol-st-width ol-st) 2)))))
+                                           (- x (round (ol-st-width ol-st) 2)))))
 	       (ol-st-y        (max 0 (min (- parent-height ol-st-height)
-					  (- y (round (ol-st-item-height ol-st) 2/3)
-					     *ol-st-item-margin*)))))
+                                           (- y (round (ol-st-item-height ol-st) 2/3)
+                                              *ol-st-item-margin*)))))
 	  (WITH-STATE (ol-st-window)
 	    (setf (DRAWABLE-X ol-st-window) ol-st-x
 		  (DRAWABLE-Y ol-st-window) ol-st-y)))))
 
     ;; Make ol-st visible
     (MAP-WINDOW ol-st-window)))
+
+(defun ol-st-choose (ol-st x y)
+  ;; Display the ol-st so that first item is at x,y.
+  (ol-st-present ol-st x y)
+  (let ((mw    (ol-st-window ol-st))
+        (exposure-count 0))
+    ;; Event processing loop
+    (dotimes (foo 800)
+      (EVENT-CASE ((DRAWABLE-DISPLAY mw) :force-output-p t)
+	(:exposure (count)
+                   (incf exposure-count)
+                   (when (= count 0)
+                     (ol-st-refresh ol-st)
+                     (return t)) t)
+	(otherwise ()
+                   (princ "other event") nil)))
+    ;; Erase the ol-st
+    (UNMAP-WINDOW mw)))
 
 
 (defun show-option-list (options x y  &optional (font-name "fixed"))
@@ -213,14 +202,27 @@
 	 (bg-color  (SCREEN-WHITE-PIXEL screen))
 	 (nice-font (OPEN-FONT display font-name))
 	 (a-ol-st    (create-ol-st (screen-root screen)	;the ol-st's parent
-				 fg-color bg-color nice-font)))
+                                   fg-color bg-color nice-font)))
     
     (setf (ol-st-title a-ol-st) "Please pick your favorite language:")
     (apply #'ol-st-set-item-list a-ol-st options)
-    
-    ;; Bedevil the user until he picks a nice programming language
-
     (unwind-protect
          (ol-st-choose a-ol-st x y))
+                                        ;(CLOSE-DISPLAY display)
+    ;a-ol-st
+    display
+    ))
 
-      (CLOSE-DISPLAY display)))
+
+(defun get-side-coords (side)
+  (case side 
+    (:left   (values 1800 800))
+    (:right  (values 4130 800))
+    (:top    (values 2965 0  ))
+    (:bottom (values 2965 1600))))
+(defun show-option-list-side (options side)
+  " displays the option list on the correct side of screen 
+    returns a function that will close that option list "
+  (multiple-value-bind (x y) (get-side-coords side)
+        (let ((ol (show-option-list options x y)))
+          #'(lambda () (close-display ol)))))
