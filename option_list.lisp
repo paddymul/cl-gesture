@@ -227,26 +227,6 @@
     ;; Make ol-st visible
     (MAP-WINDOW ol-st-window)))
 
-(defun just-say-lisp (&optional (font-name "fixed"))
-  (let* ((display   (open-default-display))
-	 (screen    (first (DISPLAY-ROOTS display)))
-	 (fg-color  (SCREEN-BLACK-PIXEL screen))
-	 (bg-color  (SCREEN-WHITE-PIXEL screen))
-	 (nice-font (OPEN-FONT display font-name))
-	 (a-ol-st    (create-ol-st (screen-root screen)	;the ol-st's parent
-				 fg-color bg-color nice-font)))
-    
-    (setf (ol-st-title a-ol-st) "Please pick your favorite language:")
-    (ol-st-set-item-list a-ol-st "Fortran" "APL" "Forth" "Lisp")
-    
-    ;; Bedevil the user until he picks a nice programming language
-    (unwind-protect
-	(do (choice)
-	    ((and (setf choice (ol-st-choose a-ol-st 2000 100))
-		  (string-equal "Lisp" choice))))
-
-      (CLOSE-DISPLAY display))))
-  
 
 (defun show-option-list (options x y  &optional (font-name "fixed"))
   (let* ((display   (open-default-display))
@@ -261,9 +241,8 @@
     (apply #'ol-st-set-item-list a-ol-st options)
     
     ;; Bedevil the user until he picks a nice programming language
+
     (unwind-protect
-	(do (choice)
-	    ((and (setf choice (ol-st-choose a-ol-st x y))
-		  (string-equal "Lisp" choice))))
+         (ol-st-choose a-ol-st x y))
 
       (CLOSE-DISPLAY display))))
