@@ -52,6 +52,9 @@
 (defmethod print-object ((object gesture) stream)
   (format stream "start-point:~A last-point:~A direction-chain:~A" 
           (start-point object) (last-point object) (direction-chain object)))
+(defmethod print-object ((object gesture) stream)
+  (format stream " direction-chain:~A" 
+          (direction-chain object)))
 
 (defmethod set-last-point ((g gesture) (p point))
   (when (>  (simple-distance (last-point g) p) 10)
