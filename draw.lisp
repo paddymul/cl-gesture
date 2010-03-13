@@ -2,7 +2,7 @@
 (use-package :xlib)
 
 
-
+#|
 (defstruct (gesture)
   "A simple menu of text strings."
   (title "choose an item:")
@@ -13,8 +13,6 @@
   item-width
   item-height
   (geometry-changed-p t))			;nil iff unchanged since displayed
-
-
 
 (defun create-gesture (parent-window text-color background-color text-font)
   (make-gesture
@@ -46,6 +44,7 @@
 					       :exposure))
     :width 400
 ))
+|#
 (defun display-centered-text
 	     (window string gcontext height width)	     
 	     (multiple-value-bind (w a d l r fa fd) (text-extents gcontext string)
@@ -69,7 +68,7 @@
 	 (parent-height 400)
 	 (parent    (CREATE-WINDOW :parent (SCREEN-ROOT screen)
 				   :override-redirect :on
-				   :x 1800 :y 100
+				   :x 800 :y 100
 				   :width parent-width :height parent-height
 				   :background bg-color
 				   :event-mask (MAKE-EVENT-MASK :button-press
@@ -94,26 +93,42 @@
 
 
 (defun figure-out-direction (x0 y0 x1 y1)
-  (if (> (abs (- x0 x1)) (abs (- y0 y1))) 
+  (let ((ratio (/ (abs (- x0 x1)) (+ (abs (- y0 y1)) 0.000001))))
+    (values 
+     (if (> ratio 1)
      (if (> x0 x1)
          :left
          :right)
      (if (> y0 y1)
          :up
-         :down)))
+         :down))
+    ratio)))
      
 (defun draw-ev (display prompt-gc draw-title draw-ack)
   (unwind-protect
        (let ((initial-x nil)
              (initial-y nil)
              (last-x nil)
-             (last-y nil))
+             (last-y nil)
+             (dir-stack '())
+             (last-point-time (get-internal-real-time)))
          (flet (
                 (nil-cords ()
                     (setf last-x nil) (setf last-y nil) 
                     (setf initial-x nil) (setf initial-y nil))
                 (dr-l  (window x0 y0 x1 y1)
                   (draw-line  window prompt-gc x0 y0 x1 y1))
+
+#|                (report-dir ()
+                  (funcall 
+                   draw-ack 
+                   (symbol-name 
+                    (figure-out-direction initial-x initial-y x y))))|#
+                (report-dir ()
+                  (funcall 
+                   draw-ack 
+                   (symbol-name 
+                    (figure-out-direction initial-x initial-y x y))))
                 (dr-p  (window x0 y0)
                   (draw-point  window prompt-gc x0 y0)))
          (loop
@@ -129,7 +144,8 @@
                                ;(dr-l win initial-x initial-y x y)
                                (dr-l  window last-x last-y x y)
                                (setf last-x x) (setf last-y y)
-                               (funcall draw-ack (symbol-name (figure-out-direction initial-x initial-y x y)))
+                               
+                               (report-dir)
                                nil
                                )
 ;              (:button-release (x y)
@@ -146,3 +162,10 @@
 			 ;;Ignore and discard any other event
 			 t)))
          (CLOSE-DISPLAY display)))))
+
+
+(defun display-end_menus (screen)
+  (let ((height (screen-height screen))
+        (width  (screen-width  screen)))
+    ;body
+))
