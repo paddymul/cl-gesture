@@ -29,24 +29,13 @@
 (defmethod direction   ((p1 point) (p2 point ))
   "returns the direction from p1 to p2"
   (let ((ratio (point-slope p1 p2)))
-    (if (or  (< -1 ratio)  (< ratio 1))
+    (if   (< 1 (abs ratio))
         (if (> (point-x p1) (point-x p2))
             :left
             :right)
         (if (> (point-y p1) (point-y p2))
             :up
             :down))))
-(defun figure-out-direction (x0 y0 x1 y1)
-  (let ((ratio (/ (abs (- x0 x1)) (+ (abs (- y0 y1)) 0.000001))))
-    (values 
-     (if (> ratio 1)
-         (if (> x0 x1)
-             :left
-             :right)
-         (if (> y0 y1)
-             :up
-             :down))
-     ratio)))
 
 (defmacro aif (test-form then-form &optional else-form)
   `(let ((it ,test-form))
