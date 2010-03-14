@@ -46,9 +46,9 @@
               (draw-ack (ack-text) (draw-text ack-text ack-y))
               (draw-title () (draw-title-height prompt)))
       (dotimes (foo 5)
-        (format t " foo ~A" foo)
         (map-window parent)
-        (draw-ev display  prompt-gc #'draw-title #'draw-ack)
+        (format t " foo ~A gesture ~A " foo 
+                (draw-ev display  prompt-gc #'draw-title #'draw-ack))
         (unmap-window parent))
       (CLOSE-DISPLAY display)
       )))
@@ -66,34 +66,18 @@
              :down))
      ratio)))
 
+(defmacro with-point (&rest body)
+  `(let ((p (make-instance 'point :x x :y y)))
+     ,body))
+
 (defun draw-ev (display prompt-gc draw-title draw-ack)
   (unwind-protect
-       (let ((initial-x nil)
-             (initial-y nil)
-             (last-x nil)
+       (let ((last-x nil)
              (last-y nil)
-             (gesture nil)
-             (last-point-time (get-internal-real-time)))
-         (flet (
-                (nil-cords ()
-                  (setf last-x nil) (setf last-y nil) 
-                  (setf initial-x nil) (setf initial-y nil))
-                (dr-l  (window x0 y0 x1 y1)
-                  (draw-line  window prompt-gc x0 y0 x1 y1))
-
-                #|                (report-dir ()
-                (funcall 
-                draw-ack 
-                (symbol-name 
-                (figure-out-direction initial-x initial-y x y))))|#
-                (report-dir ()
-                  (funcall 
-                   draw-ack 
-                   (symbol-name 
-                    (figure-out-direction initial-x initial-y x y))))
-                (dr-p  (window x0 y0)
-                  (draw-point  window prompt-gc x0 y0)))
-           (loop for x from 1
+             (gesture nil))
+         (flet ((dr-l  (window x0 y0 x1 y1)
+                  (draw-line  window prompt-gc x0 y0 x1 y1)))
+           (loop
               while (not 
                      (EVENT-CASE (display :force-output-p t)
                        (:exposure (count)
@@ -102,8 +86,6 @@
                              (funcall draw-title ))
                            nil)
                 (:motion-notify  (window x y code)
-                                        ;(dr-p win  x y)
-                                        ;(dr-l win initial-x initial-y x y)
                                  (dr-l  window last-x last-y x y)
                                  (setf last-x x) (setf last-y y)
                                  (set-last-point 
@@ -112,15 +94,8 @@
                                  nil
                                  )
                 (:button-release (x y)
-                                 (princ "button-release called")
-                ;                 (funcall draw-title )
-)
-                ;(return-from outer gesture)
-                
+                                 (princ "button-release called"))
                 (:button-press (x y)
-                               ;; Pop up the menu
-                               (nil-cords)
-                               (setf initial-x x) (setf initial-y y) 
                                (setf last-x x) (setf last-y y) 
                                (setf gesture 
                                      (make-gesture
@@ -130,6 +105,5 @@
                                nil)
                 (otherwise ()
                            ;;Ignore and discard any other event
-                           nil)))))
-         gesture)))
+                           nil))))))))
 
