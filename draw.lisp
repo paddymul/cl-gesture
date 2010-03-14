@@ -70,6 +70,14 @@
   `(let ((p (make-instance 'point :x x :y y)))
      ,@body))
 
+
+(defmacro EVENT-WHILE-NIL (display force-output-p &rest event-forms)
+  `(loop while (not (EVENT-CASE (,display :force-output-p ,force-output-p)
+                      ,@event-forms
+                      (otherwise ()
+                                 ;;Ignore and discard any other event
+                                 nil)))))
+
 (defun draw-ev (display prompt-gc draw-title draw-ack)
   (unwind-protect
        (let ((last-point nil)
@@ -78,33 +86,26 @@
                   (draw-line  window prompt-gc 
                               (point-x p1) (point-y p1)
                               (point-x p2) (point-y p2))))
-           (loop
-              while (not 
-                     (EVENT-CASE (display :force-output-p t)
-                       (:exposure (count)
-                                  ;; Display prompt
-                                  (when (zerop count)
-                                    (funcall draw-title ))
-                                  nil)
-                       (:motion-notify  (window x y code)
-                                        (with-point 
-                                            (dr-lp  window last-point p)
-                                          (setf last-point p)
-                                          (set-last-point gesture p)
-                                          ) nil)
-                       (:button-release (x y)
-                                        (princ "button-release called")
-                                        (format t "~A" gesture)
-                                        gesture )
-                       (:button-press (x y)
-                                      (with-point 
-                                          (setf last-point p)
-                                        (setf gesture (make-gesture p))
-                                        (funcall draw-ack
-                                                 (format nil "You have selected ~a." "foo"))
-                                        )nil)
-                       (otherwise ()
-                                  ;;Ignore and discard any other event
-                                  nil))))))))
-
-(defmacro EVENT-WHILE-NIL (display force-output)
+           (EVENT-WHILE-NIL display t
+                            (:exposure (count)
+                                       ;; Display prompt
+                                       (when (zerop count)
+                                         (funcall draw-title ))
+                                       nil)
+                            (:motion-notify  (window x y code)
+                                             (with-point 
+                                                 (dr-lp  window last-point p)
+                                               (setf last-point p)
+                                               (set-last-point gesture p)
+                                               ) nil)
+                            (:button-release (x y)
+                                             (princ "button-release called")
+                                             (format t "~A" gesture)
+                                             gesture )
+                            (:button-press (x y)
+                                           (with-point 
+                                               (setf last-point p)
+                                             (setf gesture (make-gesture p))
+                                             (funcall draw-ack
+                                                      (format nil "You have selected ~a." "foo"))
+                                             )nil))))))
