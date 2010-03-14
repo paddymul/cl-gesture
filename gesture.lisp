@@ -36,6 +36,18 @@
         (if (> (point-y p1) (point-y p2))
             :up
             :down))))
+(defun figure-out-direction (x0 y0 x1 y1)
+  (let ((ratio (/ (abs (- x0 x1)) (+ (abs (- y0 y1)) 0.000001))))
+    (values 
+     (if (> ratio 1)
+         (if (> x0 x1)
+             :left
+             :right)
+         (if (> y0 y1)
+             :up
+             :down))
+     ratio)))
+
 (defmacro aif (test-form then-form &optional else-form)
   `(let ((it ,test-form))
      (if it ,then-form ,else-form)))
