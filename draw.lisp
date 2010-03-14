@@ -49,7 +49,9 @@
         (format t " foo ~A" foo)
         (map-window parent)
         (draw-ev display  prompt-gc #'draw-title #'draw-ack)
-        (unmap-window parent)))))
+        (unmap-window parent))
+      (CLOSE-DISPLAY display)
+      )))
 
 
 (defun figure-out-direction (x0 y0 x1 y1)
@@ -65,7 +67,6 @@
      ratio)))
 
 (defun draw-ev (display prompt-gc draw-title draw-ack)
-  (block outer
   (unwind-protect
        (let ((initial-x nil)
              (initial-y nil)
@@ -92,15 +93,14 @@
                     (figure-out-direction initial-x initial-y x y))))
                 (dr-p  (window x0 y0)
                   (draw-point  window prompt-gc x0 y0)))
-
-           (loop
-              (EVENT-CASE (display :force-output-p t)
-                
-                (:exposure (count)
+           (loop for x from 1
+              while (not 
+                     (EVENT-CASE (display :force-output-p t)
+                       (:exposure (count)
                            ;; Display prompt
                            (when (zerop count)
                              (funcall draw-title ))
-                           t)
+                           nil)
                 (:motion-notify  (window x y code)
                                         ;(dr-p win  x y)
                                         ;(dr-l win initial-x initial-y x y)
@@ -113,8 +113,10 @@
                                  )
                 (:button-release (x y)
                                  (princ "button-release called")
-                                 (funcall draw-title ))
-                                 (return-from outer gesture))
+                ;                 (funcall draw-title )
+)
+                ;(return-from outer gesture)
+                
                 (:button-press (x y)
                                ;; Pop up the menu
                                (nil-cords)
@@ -128,7 +130,6 @@
                                nil)
                 (otherwise ()
                            ;;Ignore and discard any other event
-                           t)))
-           (CLOSE-DISPLAY display))
-         gesture))))
+                           nil)))))
+         gesture)))
 
