@@ -64,4 +64,10 @@
         (when (not (equal dir (car (direction-chain g))))
             (push dir (slot-value g 'direction-chain)))
         (setf (slot-value g 'last-point) p))))
-   
+
+(defclass gesture-command ()
+  ((direction-chain :initarg :direction-chain :accessor com-direction-chain)
+  (val :initarg :val :accessor com-val)))
+
+(defmacro def-gesture-command (direction-chain val)
+  `(make-instance 'gesture-command :direction-chain ',direction-chain :val ,val))
