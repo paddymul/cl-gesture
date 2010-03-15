@@ -182,7 +182,7 @@
   (let ((mw    (ol-st-window ol-st))
         (exposure-count 0))
     ;; Event processing loop
-    (dotimes (foo 800)
+    (dotimes (foo 800) ;; TODO FIXME  I don't know how to get window to display and then reluinqish control
       (EVENT-CASE ((DRAWABLE-DISPLAY mw) :force-output-p t)
 	(:exposure (count)
                    (incf exposure-count)
@@ -215,7 +215,7 @@
 
 
 (defun get-side-coords-v (side start-x start-y width height)
-  (let* ((w-width 150)  ;window-width  these two are wrong, they should be computed based on content
+  (let* ((w-width 150)  ;window-width  FIXME these two are wrong, they should be computed based on content
          (w-height 100) ;window-height
          (h-height (+  start-y  (/ height 2))) ;half-height
          (h-width  (+  w-width start-x  (/ width  2))))
@@ -231,6 +231,7 @@
 
 (defun get-side-coords (side) ;; for laptop screen 
   (get-side-coords-v side   0 0 1680 1050))
+
 (defun show-option-list-side (options side)
   " displays the option list on the correct side of screen 
     returns a function that will close that option list "
