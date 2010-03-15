@@ -218,8 +218,9 @@
   (case side 
     (:left   (values 1800 800))
     (:right  (values 4130 800))
-    (:top    (values 2965 0  ))
-    (:bottom (values 2965 1600))))
+    (:up    (values 2965 0  ))
+    (:down (values 2965 1600))))
+
 (defun show-option-list-side (options side)
   " displays the option list on the correct side of screen 
     returns a function that will close that option list "

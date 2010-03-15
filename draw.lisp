@@ -69,13 +69,19 @@
                                   ;;Ignore and discard any other event
                                   nil))))))
 
+
+
 (defun draw-ev (display prompt-gc draw-title draw-ack)
   (let ((last-point nil)
-        (gesture nil))
+        (gesture nil)
+        (gesture-option-list nil))
     (flet ((dr-lp (window p1 p2)
              (draw-line  window prompt-gc 
                          (point-x p1) (point-y p1)
-                         (point-x p2) (point-y p2))))
+                         (point-x p2) (point-y p2)))
+             (kill-gesture-posibilities 
+              ()
+              (mapcar #'(lambda (kill-func) (funcall kill-func)) gesture-option-list)))
       (EVENT-WHILE-NIL display t
                        (:exposure (count)
                                   ;; Display prompt
@@ -86,7 +92,11 @@
                                         (with-point 
                                             (dr-lp  window last-point p)
                                           (setf last-point p)
-                                          (set-last-point gesture p)
+                                          (if (set-last-point gesture p)
+                                              (progn
+                                                (kill-gesture-posibilities)
+                                                 (setq gesture-option-list 
+                                                    (display-gesture-posibilities gesture))))
                                           ) nil)
                        (:button-release (x y)
                                         (princ "button-release called")
@@ -98,4 +108,17 @@
                                         (setf gesture (make-gesture p))
                                         (funcall draw-ack
                                                  (format nil "You have selected ~a." "foo"))
-                                        )nil)))))
+                                        )nil))
+      (kill-gesture-posibilities)
+      )))
+
+(defmethod display-gesture-posibilities ((g gesture))
+  (let* ((d-chain (reverse (direction-chain g)))
+         (most-recent-direction (car d-chain)))
+    (mapcar 
+     #'(lambda (side) 
+         (show-option-list-side 
+          (mapcar #'(lambda (gesture-command) (format nil "~A" gesture-command))
+                  (find-applicable-gestures (cons side d-chain))) side))
+     (remove most-recent-direction '(:left :right :up :down)))))
+
