@@ -205,7 +205,7 @@
                                    fg-color bg-color nice-font)))
     
     (setf (ol-st-title a-ol-st) "Please pick your favorite language:")
-    (apply #'ol-st-set-item-list a-ol-st options)
+    (apply #'ol-st-set-item-list a-ol-st (mapcar #'(lambda (option) (format nil "~A" option)) options))
     (unwind-protect
          (ol-st-choose a-ol-st x y))
                                         ;(CLOSE-DISPLAY display)
@@ -214,13 +214,23 @@
     ))
 
 
-(defun get-side-coords (side)
-  (case side 
-    (:left   (values 1800 800))
-    (:right  (values 4130 800))
-    (:up    (values 2965 0  ))
-    (:down (values 2965 1600))))
+(defun get-side-coords-v (side start-x start-y width height)
+  (let* ((w-width 150)  ;window-width  these two are wrong, they should be computed based on content
+         (w-height 100) ;window-height
+         (h-height (+  start-y  (/ height 2))) ;half-height
+         (h-width  (+  w-width start-x  (/ width  2))))
+    
+    (case side 
+      (:left   (values  (+ start-x 0 w-width)  h-height))
+      (:right  (values  (- (+ start-x width ) w-width) h-height))
+      (:up    (values h-width start-y))
+      (:down (values  h-width (- (+ start-y height) w-height))))))
 
+(defun get-side-coords (side)  ;; for 30 inch
+  (get-side-coords-v side  1680 0 2560 1600))
+
+(defun get-side-coords (side) ;; for laptop screen 
+  (get-side-coords-v side   0 0 1680 1050))
 (defun show-option-list-side (options side)
   " displays the option list on the correct side of screen 
     returns a function that will close that option list "
