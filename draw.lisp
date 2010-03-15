@@ -81,7 +81,8 @@
                          (point-x p2) (point-y p2)))
              (kill-gesture-posibilities 
               ()
-              (mapcar #'(lambda (kill-func) (funcall kill-func)) gesture-option-list)))
+               (unwind-protect
+                    (mapcar #'(lambda (kill-func)  (funcall kill-func)) gesture-option-list))))
       (EVENT-WHILE-NIL display t
                        (:exposure (count)
                                   ;; Display prompt
@@ -113,12 +114,13 @@
       )))
 
 (defmethod display-gesture-posibilities ((g gesture))
-  (let* ((d-chain (reverse (direction-chain g)))
-         (most-recent-direction (car d-chain)))
-    (mapcar 
-     #'(lambda (side) 
-         (show-option-list-side 
-          (mapcar #'(lambda (gesture-command) (format nil "~A" gesture-command))
-                  (find-applicable-gestures (cons side d-chain))) side))
-     (remove most-recent-direction '(:left :right :up :down)))))
-
+  (let* ((d-chain (direction-chain g))
+         (most-recent-direction (car (reverse d-chain))))
+    (remove-if-not #'functionp
+                   (mapcar 
+                    #'(lambda (side) 
+                        (aif 
+                         (mapcar #'(lambda (gesture-command) (format nil "~A" gesture-command))
+                                 (find-applicable-gestures (cons side d-chain)))
+                         (show-option-list-side  it side)))
+                    (remove most-recent-direction '(:left :right :up :down))))))
