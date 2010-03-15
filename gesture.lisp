@@ -18,7 +18,7 @@
 (defmethod simple-distance ((p1 point) (p2 point ))
   "returns the greatest distance along either axis between two points "
   (max (abs (- (point-x p1) (point-x p2)))
-      (abs (- (point-y p1) (point-y p2)))))
+       (abs (- (point-y p1) (point-y p2)))))
 
 
 (defmethod distance ((p1 point) (p2 point ))
@@ -30,18 +30,18 @@
   "returns the direction from p1 to p2"
   (let ((ratio (point-slope p1 p2)))
     (if   (< 1 (abs ratio))
-        (if (> (point-x p1) (point-x p2))
-            :left
-            :right)
-        (if (> (point-y p1) (point-y p2))
-            :up
-            :down))))
+          (if (> (point-x p1) (point-x p2))
+              :left
+              :right)
+          (if (> (point-y p1) (point-y p2))
+              :up
+              :down))))
 
 (defmacro aif (test-form then-form &optional else-form)
   `(let ((it ,test-form))
      (if it ,then-form ,else-form)))
 
-; a series of one or more directions
+                                        ; a series of one or more directions
 (defclass gesture () 
   ((start-point                    :initarg :start-point :accessor start-point)
    (last-point      :initform nil  :initarg :last-point                          :reader last-point)
@@ -59,15 +59,38 @@
 
 (defmethod set-last-point ((g gesture) (p point))
   (when (>  (simple-distance (last-point g) p) 10)
-      (let 
-          ((dir (direction (last-point g) p)))
-        (when (not (equal dir (car (direction-chain g))))
-            (push dir (slot-value g 'direction-chain)))
-        (setf (slot-value g 'last-point) p))))
+    (let 
+        ((dir (direction (last-point g) p)))
+      (when (not (equal dir (car (direction-chain g))))
+        (push dir (slot-value g 'direction-chain)))
+      (setf (slot-value g 'last-point) p))))
 
 (defclass gesture-command ()
   ((direction-chain :initarg :direction-chain :accessor com-direction-chain)
-  (val :initarg :val :accessor com-val)))
+   (val :initarg :val :accessor com-val)))
 
-(defmacro def-gesture-command (direction-chain val)
-  `(make-instance 'gesture-command :direction-chain ',direction-chain :val ,val))
+(defmethod print-object ((object gesture-command) stream)
+  (format stream "<dir-seq ~A val ~A>" (com-direction-chain object) (com-val object)))
+
+
+(defparameter *gc-list* '())
+
+(defmacro make-gesture-command (direction-chain val)
+  `(make-instance
+    'gesture-command :direction-chain ',direction-chain :val ,val))
+
+(defmacro def-gesture-command (direction val)
+  `(push (make-gesture-command ,direction ,val) *gc-list*))
+
+
+(defmethod gesture-command-applicable ((gc gesture-command) direction-list)
+  "note: direction-list is expected to be reversed"
+  (if 
+   (equal 0 (search (reverse direction-list)  (com-direction-chain gc)) )
+   gc))
+
+(defmethod gesture-command-applicable ((gc gesture-command) (g gesture))
+  (gesture-command-applicable gc (direction-chain g)))
+
+(defun find-applicable-gestures2 (g )
+  (member-if #'(lambda (gc) (gesture-command-applicable gc g)) *gc-list*))
