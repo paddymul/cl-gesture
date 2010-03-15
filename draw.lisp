@@ -100,27 +100,21 @@
                                                     (display-gesture-posibilities gesture))))
                                           ) nil)
                        (:button-release (x y)
-                                        (princ "button-release called")
-                                        (format t "~A" gesture)
+                                        (format t "you have selected ~A" (find-applicable-gestures gesture))
                                         gesture )
                        (:button-press (x y)
                                       (with-point 
                                           (setf last-point p)
                                         (setf gesture (make-gesture p))
-                                        (funcall draw-ack
-                                                 (format nil "You have selected ~a." "foo"))
+                                        (kill-gesture-posibilities)
+                                        (setq gesture-option-list 
+                                              (display-gesture-posibilities gesture))
                                         )nil))
       (kill-gesture-posibilities)
       )))
 
 (defmethod display-gesture-posibilities ((g gesture))
-  (let* ((d-chain (direction-chain g))
-         (most-recent-direction (car (reverse d-chain))))
-    (remove-if-not #'functionp
-                   (mapcar 
-                    #'(lambda (side) 
-                        (aif 
-                         (mapcar #'(lambda (gesture-command) (format nil "~A" gesture-command))
-                                 (find-applicable-gestures (cons side d-chain)))
-                         (show-option-list-side  it side)))
-                    (remove most-recent-direction '(:left :right :up :down))))))
+  (remove-if-not #'functionp (mapcar #'(lambda (side-posi-pair)
+              (aif (cadr side-posi-pair)
+                   (show-option-list-side  it (car side-posi-pair))))
+          (gesture-posibilities g))))

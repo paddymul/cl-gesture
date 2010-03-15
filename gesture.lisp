@@ -105,3 +105,12 @@
   "because of the magic of generic-functions g can be either a gesture
 or a list of directions "
   (remove-if #'null (mapcar #'(lambda (gc) (gesture-command-applicable gc g)) *gc-list*)))
+
+
+(defmethod gesture-posibilities ((g gesture))
+  (let* ((d-chain (direction-chain g))
+         (most-recent-direction (car (reverse d-chain))))
+                   (mapcar 
+                    #'(lambda (side) 
+                        (cons side (list (find-applicable-gestures (cons side d-chain)))))
+                    (remove most-recent-direction '(:left :right :up :down)))))
