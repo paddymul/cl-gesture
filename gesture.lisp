@@ -114,3 +114,11 @@ or a list of directions "
                     #'(lambda (side) 
                         (cons side (list (find-applicable-gestures (cons side d-chain)))))
                     (remove most-recent-direction '(:left :right :up :down)))))
+
+
+#| 
+example gesture-commands to play with 
+(def-gesture-command (:down :right :up) "down right up ")
+(def-gesture-command (:up :right :up) "up right up ")    
+(def-gesture-command (:left :right :up) "left right up ")
+|#
