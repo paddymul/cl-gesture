@@ -61,9 +61,16 @@
   (when (>  (simple-distance (last-point g) p) 10)
     (let 
         ((dir (direction (last-point g) p)))
-      (when (not (equal dir (car (direction-chain g))))
-        (push dir (slot-value g 'direction-chain)))
-      (setf (slot-value g 'last-point) p))))
+      (if (not (equal dir (car (direction-chain g))))
+        (progn
+          (push dir (slot-value g 'direction-chain))
+          (setf (slot-value g 'last-point) p)
+          dir)
+        (progn
+          (setf (slot-value g 'last-point) p)
+          nil)))))
+
+
 
 (defclass gesture-command ()
   ((direction-chain :initarg :direction-chain :accessor com-direction-chain)
@@ -87,10 +94,14 @@
   "note: direction-list is expected to be reversed"
   (if 
    (equal 0 (search (reverse direction-list)  (com-direction-chain gc)) )
-   gc))
+   gc
+   nil))
+
 
 (defmethod gesture-command-applicable ((gc gesture-command) (g gesture))
   (gesture-command-applicable gc (direction-chain g)))
 
-(defun find-applicable-gestures2 (g )
-  (member-if #'(lambda (gc) (gesture-command-applicable gc g)) *gc-list*))
+(defun  find-applicable-gestures (g)
+  "because of the magic of generic-functions g can be either a gesture
+or a list of directions "
+  (remove-if #'null (mapcar #'(lambda (gc) (gesture-command-applicable gc g)) *gc-list*)))
